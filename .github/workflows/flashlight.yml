@@ -21,15 +21,13 @@ jobs:
     - name: Install Buildozer and Dependencies
       run: |
         sudo apt-get update
-        # Ставим только базовые инструменты, остальное подтянет сам buildozer
-        sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev
+        sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libffi-dev libssl-dev
         python -m pip install --upgrade pip
         pip install cython buildozer kivy plyer
 
     - name: Build APK with Buildozer
       run: |
-        # Команда 'buildozer android drivers' сама доставит все нужные пакеты без ошибок!
-        buildozer android drivers
+        # Запускаем сборку напрямую, buildozer сам скачает Android SDK внутри этого шага
         buildozer android debug
       env:
         APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
@@ -39,4 +37,5 @@ jobs:
       with:
         name: ColorFlashlight-APK
         path: bin/*.apk
+
 
