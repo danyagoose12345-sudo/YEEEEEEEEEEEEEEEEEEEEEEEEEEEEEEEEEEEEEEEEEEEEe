@@ -7,33 +7,45 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04  # Используем стабильную версию Ubuntu
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Get Date
-      id: get-date
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'  # Стабильная версия для Buildozer
+
+    - name: Install System Dependencies
       run: |
-        echo "date=$(date -u +'%Y%m%d')" >> $GITHUB_OUTPUT
-      shell: bash
+        sudo apt-get update
+        sudo apt-get install -y iproute2 patch bluez bluez-tools libgstreamer1.0-dev \
+        gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+        gstreamer1.0-plugins-ugly gstreamer1.0-libav libmtp-dev \
+        build-essential libsqlite3-dev sqlite3 bzip2 libbz2-dev zlib1g-dev \
+        openssl libssl-dev libffi-dev libgdbm-dev libgdbm-compat-dev liblzma-dev \
+        libreadline-dev libncursesw5-dev libgomp1 libmpc-dev libmpfr-dev libgmp-dev \
+        libtool autoconf automake autopoint pkg-config gettext ccache libffi-dev \
+        libssl-dev libtinfo5 openjdk-17-jdk unzip zip tar git curl wget Layout
 
-    - name: Cache Buildozer global directory
-      uses: actions/cache@v4
-      with:
-        path: ~/.buildozer
-        key: buildozer-global-${{ runner.os }}-${{ steps.get-date.outputs.date }}
+    - name: Install Python Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install cython==0.29.33 buildozer kivy plyer
 
-    - name: Build with Buildozer
-      uses: ArtemSBulgakov/buildozer-action@v1
-      with:
-        buildozer_version: stable
-        command: buildozer android debug
-        repository_root: .
+    - name: Build APK with Buildozer
+      run: |
+        # Запуск сборки в автономном режиме без Docker
+        buildozer android debug
+      env:
+        # Автоматическое принятие лицензий Android SDK
+        APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ColorFlashlight-APK
         path: bin/*.apk
+
